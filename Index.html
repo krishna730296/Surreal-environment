@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E T H E R E A L | Surreal Environment</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --text-primary: #f0f0f0;
+            --text-secondary: #a0a0a0;
+            --accent-1: #ff0055;
+            --accent-2: #00ffff;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --font-display: 'Syncopate', sans-serif;
+            --font-body: 'Space Grotesk', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none; /* Custom cursor */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            width: 100vw;
+            min-height: 100vh;
+        }
+
+        /* Custom Cursor */
+        #cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            border: 1px solid var(--text-primary);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s, background-color 0.3s;
+            mix-blend-mode: difference;
+        }
+
+        #cursor.hovered {
+            width: 50px;
+            height: 50px;
+            background-color: var(--text-primary);
+            border-color: transparent;
+            opacity: 0.5;
+        }
+
+        /* Canvas Background */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        /* Typography */
+        h1, h2, h3 {
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 2rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            mix-blend-mode: difference;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: 0.2em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--text-primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-title {
+            font-size: 8vw;
+            line-height: 0.9;
+            text-align: center;
+            z-index: 2;
+            mix-blend-mode: overlay;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeUp 1.5s ease forwards 0.5s;
+        }
+
+        .hero-subtitle {
+            margin-top: 2rem;
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            text-align: center;
+            z-index: 2;
+            opacity: 0;
+            animation: fadeUp 1.5s ease forwards 1s;
+        }
+
+        .hero-image-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60vw;
+            height: 60vh;
+            z-index: 1;
+            opacity: 0.4;
+            filter: blur(2px) contrast(1.2);
+            transition: transform 0.2s ease-out;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 20px;
+        }
+
+        /* Content Sections */
+        section {
+            padding: 10vh 10vw;
+            position: relative;
+        }
+
+        .section-header {
+            margin-bottom: 5rem;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .section-title {
+            font-size: 4rem;
+            background: linear-gradient(45deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-number {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            color: var(--accent-1);
+        }
+
+        /* Gallery Grid */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border-color: var(--accent-2);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            filter: grayscale(100%);
+            transition: filter 0.4s ease;
+        }
+
+        .card:hover .card-image {
+            filter: grayscale(0%);
+        }
+
+        .card-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-content p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Feature Section with Parallax */
+        .feature-split {
+            display: flex;
+            align-items: center;
+            gap: 4rem;
+            margin-top: 5rem;
+        }
+
+        .feature-text {
+            flex: 1;
+        }
+
+        .feature-text p {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .feature-visual {
+            flex: 1;
+            height: 500px;
+            position: relative;
+            perspective: 1000px;
+        }
+
+        .floating-shape {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://image.qwenlm.ai/public_source/1c5ab649-18c4-493f-8e6f-8d7b5692da52/1797c903f-7ffd-4cc6-8602-5bedfb409252.png');
+            background-size: cover;
+            background-position: center;
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.3));
+        }
+
+        .floating-shape-2 {
+            position: absolute;
+            top: 20%;
+            right: 10%;
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(45deg, var(--accent-1), transparent);
+            border-radius: 50%;
+            filter: blur(40px);
+            z-index: -1;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        /* Button */
+        .btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            background: transparent;
+            border: 1px solid var(--text-primary);
+            color: var(--text-primary);
+            text-transform: uppercase;
+            font-family: var(--font-display);
+            font-size: 0.8rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: var(--text-primary);
+            z-index: -1;
+            transition: width 0.3s ease;
+        }
+
+        .btn:hover {
+            color: var(--bg-color);
+        }
+
+        .btn:hover::before {
+            width: 100%;
+        }
+
+        /* Footer */
+        footer {
+            padding: 4rem 10vw;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10vh;
+        }
+
+        .footer-logo {
+            font-family: var(--font-display);
+            font-size: 2rem;
+        }
+
+        .socials {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .social-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .social-link:hover {
+            color: var(--accent-2);
+        }
+
+        /* Animations */
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title { font-size: 15vw; }
+            .section-title { font-size: 2.5rem; }
+            .feature-split { flex-direction: column; }
+            nav { padding: 1.5rem 2rem; }
+            .nav-links { display: none; } /* Simplified for mobile */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Custom Cursor -->
+    <div id="cursor"></div>
+
+    <!-- Three.js Background -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">ETHER<span style="color:var(--accent-1)">EAL</span></div>
+        <ul class="nav-links">
+            <li><a href="#home" class="nav-item">Origin</a></li>
+            <li><a href="#gallery" class="nav-item">Visions</a></li>
+            <li><a href="#about" class="nav-item">Concept</a></li>
+            <li><a href="#contact" class="nav-item">Connect</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-image-container" id="hero-parallax">
+            <img src="https://image.qwenlm.ai/public_source/1c5ab649-18c4-493f-8e6f-8d7b5692da52/1cf2eef27-fe36-4bbb-b0f9-a14578556f7d.png" alt="Surreal Landscape" class="hero-image">
+        </div>
+        <h1 class="hero-title">Beyond<br>Reality</h1>
+        <p class="hero-subtitle">Explore the subconscious through digital dreamscapes and interactive surrealism.</p>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery">
+        <div class="section-header">
+            <h2 class="section-title">Digital Artifacts</h2>
+            <span class="section-number">01</span>
+        </div>
+        <div class="gallery-grid">
+            <div class="card hover-trigger">
+                <img src="https://image.qwenlm.ai/public_source/1c5ab649-18c4-493f-8e6f-8d7b5692da52/1797c903f-7ffd-4cc6-8602-5bedfb409252.png" alt="Abstract Shape" class="card-image">
+                <div class="card-content">
+                    <h3>Liquid Chrome</h3>
+                    <p>A study in reflection and distortion. The boundary between solid and liquid dissolves in the digital void.</p>
+                </div>
+            </div>
+            <div class="card hover-trigger">
+                <img src="https://image.qwenlm.ai/public_source/1c5ab649-18c4-493f-8e6f-8d7b5692da52/1cf2eef27-fe36-4bbb-b0f9-a14578556f7d.png" alt="Time Dilation" class="card-image">
+                <div class="card-content">
+                    <h3>Temporal Drift</h3>
+                    <p>Time is not linear here. Clocks melt and islands float, defying the laws of physics we once knew.</p>
+                </div>
+            </div>
+            <div class="card hover-trigger">
+                <div style="width:100%; height:200px; background: linear-gradient(135deg, #222, #000); border-radius:8px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:center; color:#333;">
+                    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </div>
+                <div class="card-content">
+                    <h3>Void Whisper</h3>
+                    <p>Listening to the silence between the stars. A generative audio-visual experience.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About/Feature Section -->
+    <section id="about">
+        <div class="section-header">
+            <h2 class="section-title">The Construct</h2>
+            <span class="section-number">02</span>
+        </div>
+        <div class="feature-split">
+            <div class="feature-text">
+                <p>We build environments that challenge perception. By blending 3D geometry with organic textures, we create spaces that feel familiar yet utterly alien.</p>
+                <p>Our methodology involves procedural generation, ray-traced lighting, and a deep understanding of color theory to evoke specific emotional states.</p>
+                <a href="#" class="btn hover-trigger">Enter The Void</a>
+            </div>
+            <div class="feature-visual">
+                <div class="floating-shape-2"></div>
+                <div class="floating-shape hover-trigger"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="footer-logo">ETHER<span style="color:var(--accent-1)">EAL</span></div>
+        <div class="socials">
+            <a href="#" class="social-link hover-trigger">Instagram</a>
+            <a href="#" class="social-link hover-trigger">Twitter</a>
+            <a href="#" class="social-link hover-trigger">ArtStation</a>
+        </div>
+    </footer>
+
+    <script>
+        // Custom Cursor Logic
+        const cursor = document.getElementById('cursor');
+        const hoverTriggers = document.querySelectorAll('.hover-trigger, a, button');
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        hoverTriggers.forEach(trigger => {
+            trigger.addEventListener('mouseenter', () => {
+                cursor.classList.add('hovered');
+            });
+            trigger.addEventListener('mouseleave', () => {
+                cursor.classList.remove('hovered');
+            });
+        });
+
+        // Three.js Background Setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.querySelector('#bg-canvas'),
+            alpha: true,
+            antialias: true
+        });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        // Create Particles
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 700;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for(let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 15; // Spread particles
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: 0.02,
+            color: 0x00ffff,
+            transparent: true,
+            opacity: 0.8,
+        });
+
+        const particlesMesh = new THREE.Points(particlesGeometry, material);
+        scene.add(particlesMesh);
+
+        // Add a floating geometric shape
+        const geoGeometry = new THREE.IcosahedronGeometry(1, 0);
+        const geoMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xff0055, 
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3
+        });
+        const geoMesh = new THREE.Mesh(geoGeometry, geoMaterial);
+        geoMesh.position.x = 2;
+        scene.add(geoMesh);
+
+        camera.position.z = 3;
+
+        // Mouse Interaction for Three.js
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX - windowHalfX);
+            mouseY = (event.clientY - windowHalfY);
+        });
+
+        // Animation Loop
+        const clock = new THREE.Clock();
+
+        function animate() {
+            targetX = mouseX * 0.001;
+            targetY = mouseY * 0.001;
+
+            const elapsedTime = clock.getElapsedTime();
+
+            // Rotate entire particle system slowly
+            particlesMesh.rotation.y = elapsedTime * 0.05;
+            particlesMesh.rotation.x = elapsedTime * 0.02;
+
+            // Mouse interaction ease-in
+            particlesMesh.rotation.y += 0.05 * (targetX - particlesMesh.rotation.y);
+            particlesMesh.rotation.x += 0.05 * (targetY - particlesMesh.rotation.x);
+
+            // Animate geometric shape
+            geoMesh.rotation.x += 0.005;
+            geoMesh.rotation.y += 0.005;
+            geoMesh.position.y = Math.sin(elapsedTime) * 0.2;
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Parallax Effect for Hero Image
+        const heroParallax = document.getElementById('hero-parallax');
+        window.addEventListener('scroll', () => {
+            const scrollValue = window.scrollY;
+            if (scrollValue < 800) {
+                heroParallax.style.transform = `translate(-50%, -50%) translateY(${scrollValue * 0.3}px) scale(${1 + scrollValue * 0.0005})`;
+                heroParallax.style.opacity = 1 - (scrollValue / 700);
+            }
+        });
+
+        // Smooth Scroll for Nav Links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.
